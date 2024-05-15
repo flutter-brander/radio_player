@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.cheebeez.radio_player">
+    package="com.cheebeez.radio_player">
 
     <!--  Permissions for the plugin  -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -8,12 +8,32 @@
 
     <!--  Services for the plugin  -->
     <application android:usesCleartextTraffic="true">
+
+        <!-- Declare that app supports Android Auto. -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
+
+
         <service
-          android:name=".RadioPlayerService"
-          android:foregroundServiceType="mediaPlayback"
-          android:exported="false">
+            android:name=".RadioPlayerService"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.media.browse.CONTENT_STYLE_BROWSABLE"
+                android:value="presentation" />
+            <meta-data
+                android:name="android.media.browse.CONTENT_STYLE_PLAYABLE"
+                android:value="presentation" />
         </service>
-        <receiver android:name="androidx.media.session.MediaButtonReceiver" android:exported="true">
+
+        <receiver
+            android:name="androidx.media.session.MediaButtonReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>

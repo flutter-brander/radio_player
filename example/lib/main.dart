@@ -29,15 +29,13 @@ class _MyAppState extends State<MyApp> {
   }
 
   void initRadioPlayer() {
-    _radioPlayer.setChannel(
-      title: 'Radio Player',
-      url: 'http://stream-uk1.radioparadise.com/aac-320',
-      imageUrl: 'assets/cover.jpg',
-    );
-
-    _radioPlayer.stateStream.listen((value) {
+    _radioPlayer.playerEventsStream.listen((event) {
       setState(() {
-        isPlaying = value;
+        if (event.type.isPlay) {
+          isPlaying = true;
+        } else if (event.type.isPause) {
+          isPlaying = false;
+        }
       });
     });
 
