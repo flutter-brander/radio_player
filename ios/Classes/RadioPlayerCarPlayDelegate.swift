@@ -14,23 +14,43 @@ class RadioPlayerCarPlayDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     static private let player = RadioPlayer.shared
     static private var currentPlayingItem: CPListItem? = nil
     static private var items: [CPRadioPlayerListItem] = []
-    
-    
+    static private var rootTemplate: CPListTemplate? = nil
     
     // Create connection
     func templateApplicationScene(_ templateApplicationScene: CPTemplateApplicationScene,
                                   didConnect interfaceController: CPInterfaceController) {
         RadioPlayerCarPlayDelegate.interfaceController = interfaceController
-        RadioPlayerCarPlayDelegate.setStations()
+        RadioPlayerCarPlayDelegate.creteRootTemplate()
     }
     
-    // Update state
-    static public func setStations() {
-        let nowPlayingStationId = player.getSelectedStation?.id
+    // Init root tamplate
+    static private func creteRootTemplate() {
         var stations = player.getStations;
         if(stations.isEmpty){
             stations = StationRepository.loadStations()
+            player.addToControlCenter()
         }
+        var section = stationsToCPListSection(stations)
+        rootTemplate = CPListTemplate(title: "Chanson America", sections: [section])
+        rootTemplate!.emptyViewTitleVariants = ["Radio stations not found"]
+        rootTemplate!.emptyViewSubtitleVariants = ["Return after authorization in the mobile app"]
+        self.interfaceController?.setRootTemplate(rootTemplate!, animated: true)
+    }
+    
+    
+    // Updaet stations
+    static public func updateStations(_ stations: [Station]){
+        guard rootTemplate != nil else {
+            creteRootTemplate()
+            return
+        }
+        var section = stationsToCPListSection(stations)
+        rootTemplate?.updateSections([section])
+    }
+    
+    // Generate list
+    static private func stationsToCPListSection(_ stations: [Station]) -> CPListSection {
+        let nowPlayingStationId = player.getSelectedStation?.id
         items = stations.map { station -> CPRadioPlayerListItem in
             var item =  CPListItem(text: station.title, detailText: "")
             item.setImage(ImageHallper.downloadImage(station.coverUrl))
@@ -45,13 +65,8 @@ class RadioPlayerCarPlayDelegate: UIResponder, CPTemplateApplicationSceneDelegat
             }
             return CPRadioPlayerListItem(item: item, stationId: station.id)
         }
-        let section = CPListSection(items: items.map {cpItem -> CPListItem in return cpItem.item})
-        var template = CPListTemplate(title: "Chanson America", sections: [section])
-        template.emptyViewTitleVariants = ["Radio stations not found"]
-        template.emptyViewSubtitleVariants = ["Return after authorization in the mobile app"]
-        self.interfaceController?.setRootTemplate(template, animated: true)
+        return CPListSection(items: items.map {cpItem -> CPListItem in return cpItem.item})
     }
-    
     
     // Tap on list item heander
     static private func onPressedItem(item: CPListItem, stationId: Int){

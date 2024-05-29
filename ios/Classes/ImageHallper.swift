@@ -8,8 +8,10 @@
 import Foundation
 
 class ImageHallper {
-    static public func downloadImage(_ value: String) -> UIImage? {
-        guard let url = URL(string: value) else { return nil }
+    static public func downloadImage(_ value: String?) -> UIImage? {
+        guard let value = value, !value.isEmpty, let url = URL(string: value) else {
+            return nil
+        }
         var result: UIImage?
         let semaphore = DispatchSemaphore(value: 0)
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
