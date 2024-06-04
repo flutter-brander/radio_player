@@ -15,4 +15,7 @@ object K {
     const val UNKNOWN = "unknown"
     const val DEFAULT_SONG_IMAGE_NAME = "defaultSongImage"
     const val CHANGE_STATION_EVENT_NAME = "changeStation"
+
+    const val EMPTY_MESSAGE_TITLE: String = "Connection..."
+    const val EMPTY_MESSAGE_SUBTITLE: String = "Confirm login in the your mobile app"
 }

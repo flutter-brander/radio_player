@@ -53,6 +53,9 @@ class RadioPlayer: NSObject , AVPlayerItemMetadataOutputPushDelegate {
         self.stations = stations
         StationRepository.saveStations(stations)
         if(notifyCarPlay){RadioPlayerCarPlayDelegate.updateStations(stations)}
+        if(stations.isEmpty){
+            stop()
+        }
     }
     
     public func selectStation(_ stationId: Int){
@@ -164,8 +167,10 @@ class RadioPlayer: NSObject , AVPlayerItemMetadataOutputPushDelegate {
     
     func stop() {
         guard player != nil else {return}
+        
         player.pause()
         player.replaceCurrentItem(with: nil)
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
     
     func pause() {
@@ -199,7 +204,6 @@ class RadioPlayer: NSObject , AVPlayerItemMetadataOutputPushDelegate {
         commandCenter.playCommand.isEnabled = false
         commandCenter.pauseCommand.isEnabled = false
         
-        
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
         try? AVAudioSession.sharedInstance().setActive(false)
     }
@@ -211,21 +215,7 @@ class RadioPlayer: NSObject , AVPlayerItemMetadataOutputPushDelegate {
         
         // Control buttons on the lock screen.
         UIApplication.shared.beginReceivingRemoteControlEvents()
-        let commandCenter = MPRemoteCommandCenter.shared()
         
-        // Play button.
-        commandCenter.playCommand.isEnabled = true
-        commandCenter.playCommand.addTarget { [weak self] (event) -> MPRemoteCommandHandlerStatus in
-            self?.play()
-            return .success
-        }
-        
-        // Pause button.
-        commandCenter.pauseCommand.isEnabled = true
-        commandCenter.pauseCommand.addTarget { [weak self] (event) -> MPRemoteCommandHandlerStatus in
-            self?.stop()
-            return .success
-        }
     }
     
     func jsonToMap(_ jsonString: String) -> [String: Any] {
@@ -296,18 +286,33 @@ class RadioPlayer: NSObject , AVPlayerItemMetadataOutputPushDelegate {
         let commandCenter = MPRemoteCommandCenter.shared()
         commandCenter.playCommand.isEnabled = true
         commandCenter.pauseCommand.isEnabled = true
+        commandCenter.nextTrackCommand.isEnabled = true
+        commandCenter.previousTrackCommand.isEnabled = true
         
         setPlayerMetadata(title: selectedStation?.title, coverUrl: selectedStation?.coverUrl)
         
-        commandCenter.nextTrackCommand.isEnabled = true
-        
         if(!mediaButtonsIsListened){
+            // Next button
             commandCenter.nextTrackCommand.addTarget { [weak self] event in
                 self?.onTapNext()
                 return .success
             }
+            
+            // Next previous
             commandCenter.previousTrackCommand.addTarget { [weak self] event in
                 self?.onTapPrevios()
+                return .success
+            }
+        
+            // Play button.
+            commandCenter.playCommand.addTarget { [weak self] (event) -> MPRemoteCommandHandlerStatus in
+                self?.play()
+                return .success
+            }
+            
+            // Pause button.
+            commandCenter.pauseCommand.addTarget { [weak self] (event) -> MPRemoteCommandHandlerStatus in
+                self?.pause()
                 return .success
             }
             mediaButtonsIsListened = true
@@ -319,8 +324,12 @@ class RadioPlayer: NSObject , AVPlayerItemMetadataOutputPushDelegate {
         playButtonIsEnabled = false
         UIApplication.shared.endReceivingRemoteControlEvents()
         let commandCenter = MPRemoteCommandCenter.shared()
+        
         commandCenter.playCommand.isEnabled = false
+        commandCenter.playCommand.removeTarget(nil)
+        
         commandCenter.pauseCommand.isEnabled = false
+        commandCenter.pauseCommand.removeTarget(nil)
         
         commandCenter.nextTrackCommand.isEnabled = false
         commandCenter.nextTrackCommand.removeTarget(nil)

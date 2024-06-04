@@ -133,8 +133,8 @@ class RadioPlayerService : MediaBrowserServiceCompat(), Player.Listener {
         // When stations is empty
         if (stations.isEmpty()) {
             val emptyItem = MediaBrowserCompat.MediaItem(
-                MediaDescriptionCompat.Builder().setTitle("Radio stations not found")
-                    .setSubtitle("Return after authorization in the mobile app")
+                MediaDescriptionCompat.Builder().setTitle(K.EMPTY_MESSAGE_TITLE)
+                    .setSubtitle(K.EMPTY_MESSAGE_SUBTITLE)
                     .setMediaId(K.BROWSER_EMPTY_PATH).build(),
                 MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
             )

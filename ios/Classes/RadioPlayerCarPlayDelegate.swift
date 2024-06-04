@@ -16,6 +16,9 @@ class RadioPlayerCarPlayDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     static private var items: [CPRadioPlayerListItem] = []
     static private var rootTemplate: CPListTemplate? = nil
     
+    static private let emptyMessageTitle: String = "Connection..."
+    static private let emptyMessageSubtitle: String = "Confirm login in the your mobile app"
+    
     // Create connection
     func templateApplicationScene(_ templateApplicationScene: CPTemplateApplicationScene,
                                   didConnect interfaceController: CPInterfaceController) {
@@ -32,8 +35,8 @@ class RadioPlayerCarPlayDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         }
         var section = stationsToCPListSection(stations)
         rootTemplate = CPListTemplate(title: "Chanson America", sections: [section])
-        rootTemplate!.emptyViewTitleVariants = ["Radio stations not found"]
-        rootTemplate!.emptyViewSubtitleVariants = ["Return after authorization in the mobile app"]
+        rootTemplate!.emptyViewTitleVariants = [emptyMessageTitle]
+        rootTemplate!.emptyViewSubtitleVariants = [emptyMessageSubtitle]
         self.interfaceController?.setRootTemplate(rootTemplate!, animated: true)
     }
     
@@ -46,7 +49,13 @@ class RadioPlayerCarPlayDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         }
         var section = stationsToCPListSection(stations)
         rootTemplate?.updateSections([section])
+        if(stations.isEmpty){
+            if(interfaceController?.topTemplate is CPNowPlayingTemplate){
+                interfaceController?.popToRootTemplate(animated: true)
+            }
+        }
     }
+    
     
     // Generate list
     static private func stationsToCPListSection(_ stations: [Station]) -> CPListSection {
