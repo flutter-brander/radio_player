@@ -132,13 +132,7 @@ class RadioPlayerService : MediaBrowserServiceCompat(), Player.Listener {
 
         // When stations is empty
         if (stations.isEmpty()) {
-            val emptyItem = MediaBrowserCompat.MediaItem(
-                MediaDescriptionCompat.Builder().setTitle(K.EMPTY_MESSAGE_TITLE)
-                    .setSubtitle(K.EMPTY_MESSAGE_SUBTITLE)
-                    .setMediaId(K.BROWSER_EMPTY_PATH).build(),
-                MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-            )
-            result.sendResult(listOf(emptyItem).toMutableList())
+            result.sendResult(listOf<MediaBrowserCompat.MediaItem>().toMutableList())
             return;
         }
 
