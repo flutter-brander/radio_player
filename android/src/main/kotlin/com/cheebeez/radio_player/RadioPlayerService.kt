@@ -113,6 +113,9 @@ class RadioPlayerService : MediaBrowserServiceCompat(), Player.Listener {
         context = applicationContext
         createNotificationManager()
         stationsRepository = StationsRepository(this)
+        player.setRepeatMode(Player.REPEAT_MODE_ALL)
+        player.addListener(this)
+        Log.d(TAG, "onCreate: ")
     }
 
     override fun onGetRoot(
@@ -128,6 +131,7 @@ class RadioPlayerService : MediaBrowserServiceCompat(), Player.Listener {
         if (stations.isEmpty()) {
             result.detach()
             stations = stationsRepository.getStations()
+            setStations(stations, false)
         }
 
         // When stations is empty
@@ -148,8 +152,7 @@ class RadioPlayerService : MediaBrowserServiceCompat(), Player.Listener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        player.setRepeatMode(Player.REPEAT_MODE_ALL)
-        player.addListener(this)
+        Log.d(TAG, "onStartCommand: ")
         return START_NOT_STICKY
     }
 
@@ -179,7 +182,7 @@ class RadioPlayerService : MediaBrowserServiceCompat(), Player.Listener {
         player.playWhenReady = false
     }
 
-    fun setStations(stations: List<Station>) {
+    fun setStations(stations: List<Station>, notifyAndroidAuto: Boolean = true) {
         try {
             this.stations = stations
             var mediaItems = stations.map { station -> MediaItem.fromUri(station.streamUrl) }
@@ -189,8 +192,10 @@ class RadioPlayerService : MediaBrowserServiceCompat(), Player.Listener {
                 selectStation(selectedStation?.id ?: stations.first().id)
             }
 
-            stationsRepository.saveStations(stations)
-            notifyChildrenChanged(K.BROWSER_ROOT_PATH)
+            if (notifyAndroidAuto) {
+                stationsRepository.saveStations(stations)
+                notifyChildrenChanged(K.BROWSER_ROOT_PATH)
+            }
         } catch (er: Exception) {
             Log.d(TAG, "setStations error: $er")
         }
@@ -225,6 +230,7 @@ class RadioPlayerService : MediaBrowserServiceCompat(), Player.Listener {
                 arrayListOf(K.CHANGE_STATION_EVENT_NAME, stationId)
             )
             localBroadcastManager.sendBroadcast(playerEventIntent)
+            Log.d(TAG, "selectStation (cancel): $stationId")
         } catch (error: Exception) {
             Log.d(TAG, "selectStation error: $error")
         }

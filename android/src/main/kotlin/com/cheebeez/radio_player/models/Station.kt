@@ -17,6 +17,15 @@ data class Station(
         fun fromJsonList(items: List<String>): List<Station> {
             return items.map { jsonString -> fromJson(jsonString) }
         }
+
+        fun fromJsonList(jsonListString: String): List<Station> {
+            val type = object : TypeToken<List<Station>>() {}.type
+            return gson.fromJson(jsonListString, type)
+        }
+
+        fun toJsonList(stations: List<Station>): String {
+            return gson.toJson(stations)
+        }
     }
 
     fun toJson(): Map<String, Any> {
