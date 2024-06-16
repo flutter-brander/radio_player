@@ -17,6 +17,7 @@
 
         <service
             android:name=".RadioPlayerService"
+            android:foregroundServiceType="mediaPlayback"
             android:exported="true">
 
             <intent-filter>
