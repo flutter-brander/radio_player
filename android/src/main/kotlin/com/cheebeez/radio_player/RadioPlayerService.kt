@@ -167,6 +167,8 @@ class RadioPlayerService : MediaBrowserServiceCompat(), Player.Listener {
 
     fun play() {
         if (player.mediaItemCount == 0) return;
+        
+        player.seekTo(0)
         player.playWhenReady = true
         Log.d(TAG, "play: ")
     }
