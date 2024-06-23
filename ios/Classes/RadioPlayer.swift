@@ -160,7 +160,10 @@ class RadioPlayer: NSObject , AVPlayerItemMetadataOutputPushDelegate {
     }
     
     func play() {
-        guard player != nil else {return}
+        if(player == nil){
+            if(selectedStation == nil) {return}
+            setStream(streamUrl: selectedStation!.streamUrl, title: selectedStation!.title, streamImageUrl: selectedStation!.coverUrl)
+        }
         resetStream()
         player.play()
     }
@@ -303,7 +306,7 @@ class RadioPlayer: NSObject , AVPlayerItemMetadataOutputPushDelegate {
                 self?.onTapPrevios()
                 return .success
             }
-        
+            
             // Play button.
             commandCenter.playCommand.addTarget { [weak self] (event) -> MPRemoteCommandHandlerStatus in
                 self?.play()
