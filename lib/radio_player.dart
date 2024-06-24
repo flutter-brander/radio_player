@@ -23,7 +23,8 @@ class RadioPlayer {
     await _methodChannel.invokeMethod(kSetStationsMethod, mapList);
   }
 
-  Future<void> selectStation(int stationId) async {
+  Future<void> selectStation(int stationId, {Duration duration = Duration.zero}) async {
+    await Future.delayed(duration, () {});
     await _methodChannel.invokeMethod(kSelectStationMethod, stationId);
   }
 
