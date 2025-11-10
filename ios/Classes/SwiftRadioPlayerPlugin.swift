@@ -9,92 +9,72 @@ import UIKit
 
 public class SwiftRadioPlayerPlugin: NSObject, FlutterPlugin {
     static let instance = SwiftRadioPlayerPlugin()
-    private let player = RadioPlayer()
-
+    private let player = RadioPlayer.shared
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "radio_player", binaryMessenger: registrar.messenger())
         registrar.addMethodCallDelegate(instance, channel: channel)
-
-        let stateChannel = FlutterEventChannel(name: "radio_player/stateEvents", binaryMessenger: registrar.messenger())
-        stateChannel.setStreamHandler(StateStreamHandler())
+        
+        let playerEventsChannel = FlutterEventChannel(name: "radio_player/playerEvents", binaryMessenger: registrar.messenger())
+        playerEventsChannel.setStreamHandler(PlayerEventStreamHandler())
         let metadataChannel = FlutterEventChannel(name: "radio_player/metadataEvents", binaryMessenger: registrar.messenger())
         metadataChannel.setStreamHandler(MetadataStreamHandler())
-
-        // Channel for default artwork
-        let defaultArtworkChannel = FlutterBasicMessageChannel(name: "radio_player/setArtwork", binaryMessenger: registrar.messenger(), codec: FlutterBinaryCodec())
-        defaultArtworkChannel.setMessageHandler { message, result in
-            let image = UIImage(data: message as! Data)
-            instance.player.defaultArtwork = image
-            instance.player.setArtwork(image)
-            result(nil)
-        }
-
-        // Channel for metadata artwork
-        let metadataArtworkChannel = FlutterBasicMessageChannel(name: "radio_player/getArtwork", binaryMessenger: registrar.messenger(), codec: FlutterBinaryCodec())
-        metadataArtworkChannel.setMessageHandler { message, result in
-            let data = instance.player.metadataArtwork?.jpegData(compressionQuality: 1.0)
-            result(data)
-        }
     }
-
+    
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
-            case "set":
-                let args = call.arguments as! Array<String>
-                player.streamTitle = args[0]
-                player.streamUrl = args[1]
-                player.setMediaItem()
-            case "play":
-                player.play()
-            case "stop":
-                player.stop()
-            case "pause":
-                player.pause()
-            case "metadata":
-                let metadata = call.arguments as! Array<String>
-                player.setMetadata(metadata)
-            case "itunes_artwork_parser":
-                let enable = call.arguments as! Bool
-                player.itunesArtworkParser = enable
-            case "ignore_icy":
-                player.ignoreIcy = true
-            case "addToControlCenter":
-                player.addToControlCenter()
-            case "removeFromControlCenter":
-                player.removeFromControlCenter()
-            case "startTimer":
-                let seconds = call.arguments as! Double
-                player.stopPlayer(after: seconds)
-            case "cancelTimer":
-                player.cancelTimer()
-            default:
-                result(FlutterMethodNotImplemented)
+        case "setStations":
+            print(call.arguments)
+            let stations = Station.fromJsonList(call.arguments as! [String])
+            player.setStations( stations)
+        case "selectStation":
+            let stationId = call.arguments as! Int
+            player.selectStation(stationId)
+            print(call.arguments)
+        case "play":
+            player.play()
+        case "stop":
+            player.stop()
+        case "pause":
+            player.pause()
+        case "addToControlCenter":
+            player.addToControlCenter()
+        case "removeFromControlCenter":
+            player.removeFromControlCenter()
+        case "startTimer":
+            let seconds = call.arguments as! Double
+            player.stopPlayer(after: seconds)
+        case "cancelTimer":
+            player.cancelTimer()
+        case "isPlaying":
+            let isPlaying = player.isPlaying
+            result(isPlaying)
+        default:
+            result(FlutterMethodNotImplemented)
         }
- 
+        
         result(1)
     }
 }
 
 /** Handler for playback state changes, passed to setStreamHandler() */
-class StateStreamHandler: NSObject, FlutterStreamHandler {
+class PlayerEventStreamHandler: NSObject, FlutterStreamHandler {
     private var eventSink: FlutterEventSink?
-    private var previousState: Bool?
-
+    
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         eventSink = events
-        NotificationCenter.default.addObserver(self, selector: #selector(onRecieve(_:)), name: NSNotification.Name(rawValue: "state"), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(onRecieve(_:)), name: NSNotification.Name(rawValue: "playerEvent"), object: nil)
         return nil
     }
-
+    
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
         eventSink = nil
         return nil
     }
-
+    
     // Notification receiver for playback state changes, passed to addObserver()
     @objc private func onRecieve(_ notification: Notification) {
-        if let state = notification.userInfo!["state"], previousState != (state as! Bool) {
-            previousState = state as? Bool
+        if let state = notification.userInfo!["playerEvent"] {
             eventSink?(state)
         }
     }
@@ -103,18 +83,18 @@ class StateStreamHandler: NSObject, FlutterStreamHandler {
 /** Handler for new metadata, passed to setStreamHandler() */
 class MetadataStreamHandler: NSObject, FlutterStreamHandler {
     private var eventSink: FlutterEventSink?
-
+    
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         eventSink = events
         NotificationCenter.default.addObserver(self, selector: #selector(onRecieve(_:)), name: NSNotification.Name(rawValue: "metadata"), object: nil)
         return nil
     }
-
+    
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
         eventSink = nil
         return nil
     }
-
+    
     // Notification receiver for new metadata, passed to addObserver()
     @objc private func onRecieve(_ notification: Notification) {
         if let metadata = notification.userInfo!["metadata"] {
